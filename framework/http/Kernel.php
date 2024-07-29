@@ -2,27 +2,21 @@
 
 namespace User\Framework\http;
 
-use FastRoute\RouteCollector;
-
-use function FastRoute\simpleDispatcher;
+use User\Framework\Routing\RouterInterface;
 
 class Kernel
 {
+    public function __construct(private RouterInterface $router) {}
+
     public function handle(Request $request): Response
     {
         //adding routes
-        $dispatcher = simpleDispatcher(function (RouteCollector $routeCollector) {
-
-            $routes = include BASE_PATH.'/routes/web.php';
-            foreach ($routes as $route) {
-                $routeCollector->addRoute(...$route);
-            }
-        });
-
-        $route_info = $dispatcher->dispatch($request->getMethod(), $request->getPath());
-
-        [$route_status,[$route_controller, $route_method], $route_vars] = $route_info;
-        $response = (new $route_controller)->$route_method($route_vars);
+        try {
+            [$route_handler, $route_vars] = $this->router->dispatch($request);
+            $response = call_user_func_array($route_handler, $route_vars);
+        } catch (\Throwable $exception) {
+            $response = new Response($exception->getMessage(), $exception->getCode());
+        }
 
         return $response;
     }
