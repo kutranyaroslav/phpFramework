@@ -7,7 +7,10 @@ class Response
     public function __construct(
         private mixed $content,
         private int $status_code = 200,
-        private array $headers = []) {}
+        private array $headers = [])
+    {
+        http_response_code($this->status_code);
+    }
 
     public function send()
     {

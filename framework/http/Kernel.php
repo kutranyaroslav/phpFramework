@@ -2,6 +2,7 @@
 
 namespace User\Framework\http;
 
+use User\Framework\http\exceptions\HttpException;
 use User\Framework\Routing\RouterInterface;
 
 class Kernel
@@ -14,8 +15,10 @@ class Kernel
         try {
             [$route_handler, $route_vars] = $this->router->dispatch($request);
             $response = call_user_func_array($route_handler, $route_vars);
-        } catch (\Throwable $exception) {
-            $response = new Response($exception->getMessage(), $exception->getCode());
+        } catch (HttpException $e) {
+            $response = new Response($e->getMessage(), $e->getStatusCode());
+        } catch (\Throwable $e) {
+            $response = new Response($e->getMessage(), $e->getCode());
         }
 
         return $response;
